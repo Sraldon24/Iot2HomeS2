@@ -3,8 +3,8 @@
 ============================================
 DomiSafe IoT System - Google Drive Uploader
 ============================================
-Uploads logs + captured images using a SERVICE ACCOUNT
-NO browser login, NO OAuth screen, works instantly.
+Uses OAuth Desktop Mode (run_console) → works with personal Gmail
+No shared-drive, no service account, no verification needed.
 """
 
 import os
@@ -12,7 +12,9 @@ import sys
 import logging
 from pathlib import Path
 
-from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -25,10 +27,8 @@ logging.basicConfig(
 )
 log = logging.getLogger("upload_logs")
 
-# Required Drive scopes
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
-
-SERVICE_ACCOUNT_FILE = "service_account.json"
+TOKEN_FILE = "credentials.json"
 
 
 class GoogleDriveUploader:
@@ -40,52 +40,58 @@ class GoogleDriveUploader:
         self.image_folder_id = self.config.get("google_drive_image_folder_id", "")
         self.service = None
 
-        if not os.path.exists(SERVICE_ACCOUNT_FILE):
-            log.error("❌ Missing service_account.json")
+        if not os.path.exists("client_secrets.json"):
+            log.error("❌ Missing client_secrets.json")
             self.enabled = False
 
     # ----------------------------------------------------
-    # AUTH (service account)
+    # AUTH (OAuth Desktop)
     # ----------------------------------------------------
     def authenticate(self):
-        if not self.enabled:
-            log.warning("⚠️ Google Drive upload disabled in config.json")
-            return False
 
-        try:
-            creds = service_account.Credentials.from_service_account_file(
-                SERVICE_ACCOUNT_FILE,
-                scopes=SCOPES
-            )
+        creds = None
 
-            self.service = build("drive", "v3", credentials=creds)
-            log.info("✅ Google Drive service ready (service account).")
-            return True
+        # Load old creds
+        if os.path.exists(TOKEN_FILE):
+            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
 
-        except Exception as e:
-            log.error(f"❌ Authentication failed: {e}")
-            return False
+        # Refresh or new login
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+                log.info("🔄 Token refreshed")
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file("client_secrets.json", SCOPES)
+
+                print("\n🔐 LOGIN REQUIRED:")
+                print("   Copy the link, open in your browser, login, paste code back here.\n")
+
+                creds = flow.run_console()   # 💥 WORKS PERFECTLY WITHOUT LOCALHOST
+
+            # Save token
+            with open(TOKEN_FILE, "w") as f:
+                f.write(creds.to_json())
+                log.info("💾 Credentials saved")
+
+        self.service = build("drive", "v3", credentials=creds)
+        log.info("✅ Google Drive API ready")
+        return True
 
     # ----------------------------------------------------
-    # Upload file
-    # ----------------------------------------------------
-    def upload_file(self, file_path, folder_id, mime_type):
-        if not self.service:
-            log.error("❌ Service not initialized")
-            return False
+    def upload_file(self, file_path, folder_id, mime):
+
+        file_name = os.path.basename(file_path)
+
+        metadata = {
+            "name": file_name,
+            "parents": [folder_id]
+        }
 
         try:
-            file_name = os.path.basename(file_path)
+            media = MediaFileUpload(file_path, mimetype=mime)
 
-            file_metadata = {
-                "name": file_name,
-                "parents": [folder_id]
-            }
-
-            media = MediaFileUpload(file_path, mimetype=mime_type, resumable=True)
-
-            uploaded = self.service.files().create(
-                body=file_metadata,
+            self.service.files().create(
+                body=metadata,
                 media_body=media,
                 fields="id"
             ).execute()
@@ -98,104 +104,60 @@ class GoogleDriveUploader:
             return False
 
     # ----------------------------------------------------
-    # Upload logs/
-    # ----------------------------------------------------
     def upload_logs(self):
-        if not self.log_folder_id:
-            log.warning("⚠️ log_folder_id not set")
+        logs = list(Path("logs").glob("*.log"))
+        if not logs:
+            log.info("No logs found")
             return 0
-
-        logs_dir = Path("logs")
-        if not logs_dir.exists():
-            log.warning("⚠️ logs/ not found")
-            return 0
-
-        log_files = list(logs_dir.glob("*.log"))
-        if not log_files:
-            log.info("📭 No logs to upload")
-            return 0
-
-        log.info(f"📤 Uploading {len(log_files)} log files…")
 
         uploaded = 0
-        for f in log_files:
+        for f in logs:
             if self.upload_file(str(f), self.log_folder_id, "text/plain"):
                 uploaded += 1
 
-        log.info(f"✅ Uploaded {uploaded}/{len(log_files)}")
         return uploaded
 
     # ----------------------------------------------------
-    # Upload captures/
-    # ----------------------------------------------------
     def upload_images(self):
-        if not self.image_folder_id:
-            log.warning("⚠️ image_folder_id not set")
-            return 0
-
-        cap_dir = Path("captures")
-        if not cap_dir.exists():
-            log.warning("⚠️ captures/ not found")
-            return 0
-
-        image_files = []
+        images = []
         for ext in ("*.jpg", "*.jpeg", "*.png"):
-            image_files.extend(cap_dir.glob(ext))
+            images.extend(Path("captures").glob(ext))
 
-        if not image_files:
-            log.info("📭 No images to upload")
+        if not images:
+            log.info("No images found")
             return 0
-
-        log.info(f"📤 Uploading {len(image_files)} images…")
 
         uploaded = 0
-        for img in image_files:
-            mime = "image/jpeg" if img.suffix.lower() in [".jpg", ".jpeg"] else "image/png"
+        for img in images:
+            mime = "image/jpeg" if img.suffix.lower() in (".jpg", ".jpeg") else "image/png"
             if self.upload_file(str(img), self.image_folder_id, mime):
                 uploaded += 1
 
-        log.info(f"✅ Uploaded {uploaded}/{len(image_files)}")
         return uploaded
 
     # ----------------------------------------------------
-    # Upload all
-    # ----------------------------------------------------
     def upload_all(self):
         if not self.enabled:
-            log.info("ℹ️ Google Drive upload disabled")
+            print("Upload disabled in config.json")
             return False
 
         if not self.authenticate():
             return False
 
-        total = 0
-        total += self.upload_logs()
-        total += self.upload_images()
-
-        log.info(f"🎉 Upload complete: {total} files")
+        total = self.upload_logs() + self.upload_images()
+        print(f"\n🎉 Upload complete: {total} file(s)")
         return True
 
 
-# --------------------------------------------------------
-# MAIN
-# --------------------------------------------------------
 def main():
     print("=" * 50)
-    print("🏠 DomiSafe - Google Drive Uploader (Service Account)")
+    print("🏠 DomiSafe - Google Drive Uploader (OAuth)")
     print("=" * 50)
 
     try:
-        uploader = GoogleDriveUploader()
-
-        if not uploader.enabled:
-            print("⚠️ Google Drive upload disabled in config.json")
-            return 0
-
-        success = uploader.upload_all()
-        return 0 if success else 1
-
+        return 0 if GoogleDriveUploader().upload_all() else 1
     except KeyboardInterrupt:
-        print("\n⚠️ Cancelled by user")
+        print("\n⚠️ Cancelled")
         return 1
 
 
