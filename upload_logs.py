@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-============================================
-DomiSafe IoT System - Google Drive Uploader
-============================================
-Uses OAuth Desktop Mode (run_console) → works with personal Gmail
-No shared-drive, no service account, no verification needed.
+==================================================
+DomiSafe IoT System - Google Drive Uploader (OAuth)
+==================================================
+Works with personal Gmail.
+No service account. No Workspace. 100% free.
+
+First run → Shows a link → Login once → Paste code.
+After that → credentials.json makes everything automatic.
 """
 
 import os
@@ -41,51 +44,53 @@ class GoogleDriveUploader:
         self.service = None
 
         if not os.path.exists("client_secrets.json"):
-            log.error("❌ Missing client_secrets.json")
+            log.error("❌ Missing client_secrets.json (OAuth).")
             self.enabled = False
 
     # ----------------------------------------------------
-    # AUTH (OAuth Desktop)
+    # AUTH — OAuth Desktop (Works with personal Gmail)
     # ----------------------------------------------------
     def authenticate(self):
-
         creds = None
 
-        # Load old creds
+        # Load existing token
         if os.path.exists(TOKEN_FILE):
             creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
 
-        # Refresh or new login
+        # If no token OR invalid token → login flow
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
                 log.info("🔄 Token refreshed")
             else:
-                flow = InstalledAppFlow.from_client_secrets_file("client_secrets.json", SCOPES)
+                # OAuth Desktop mode (console)
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    "client_secrets.json", SCOPES
+                )
 
                 print("\n🔐 LOGIN REQUIRED:")
-                print("   Copy the link, open in your browser, login, paste code back here.\n")
+                print("1. Copy the link below")
+                print("2. Open in ANY browser")
+                print("3. Login to Google")
+                print("4. Paste the code back here\n")
 
-                creds = flow.run_console()   # 💥 WORKS PERFECTLY WITHOUT LOCALHOST
+                creds = flow.run_local_server(port=0)
 
-            # Save token
+            # Save new token
             with open(TOKEN_FILE, "w") as f:
                 f.write(creds.to_json())
                 log.info("💾 Credentials saved")
 
+        # Build Drive service
         self.service = build("drive", "v3", credentials=creds)
         log.info("✅ Google Drive API ready")
         return True
 
     # ----------------------------------------------------
     def upload_file(self, file_path, folder_id, mime):
-
         file_name = os.path.basename(file_path)
 
-        metadata = {
-            "name": file_name,
-            "parents": [folder_id]
-        }
+        metadata = {"name": file_name, "parents": [folder_id]}
 
         try:
             media = MediaFileUpload(file_path, mimetype=mime)
@@ -107,7 +112,7 @@ class GoogleDriveUploader:
     def upload_logs(self):
         logs = list(Path("logs").glob("*.log"))
         if not logs:
-            log.info("No logs found")
+            log.info("📭 No logs found")
             return 0
 
         uploaded = 0
@@ -124,7 +129,7 @@ class GoogleDriveUploader:
             images.extend(Path("captures").glob(ext))
 
         if not images:
-            log.info("No images found")
+            log.info("📭 No images found")
             return 0
 
         uploaded = 0
@@ -138,7 +143,7 @@ class GoogleDriveUploader:
     # ----------------------------------------------------
     def upload_all(self):
         if not self.enabled:
-            print("Upload disabled in config.json")
+            print("⚠️ Upload disabled in config.json")
             return False
 
         if not self.authenticate():
@@ -149,6 +154,7 @@ class GoogleDriveUploader:
         return True
 
 
+# --------------------------------------------------------
 def main():
     print("=" * 50)
     print("🏠 DomiSafe - Google Drive Uploader (OAuth)")
