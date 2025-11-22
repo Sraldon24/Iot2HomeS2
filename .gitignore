@@ -1,0 +1,17 @@
+config.json
+credentials.json
+client_secrets.json
+__pycache__/
+*.pyc
+venv/
+*.db
+logs/
+captures/
+backups/
+.DS_Store
+service_account.json
+credentials.json
+client_secrets.json
+service_account.json
+credentials.json
+client_secrets.json

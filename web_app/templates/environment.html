@@ -1,0 +1,71 @@
+<!-- ============================================ -->
+<!-- FILE: web_app/templates/environment.html -->
+<!-- ============================================ -->
+{% extends "base.html" %}
+{% block content %}
+<h2>🌦️ Environment Data</h2>
+
+<div class="card">
+  <h3>📅 Select Date</h3>
+  <form method="POST">
+    <input type="date" name="date" value="{{ selected_date }}" required>
+    <button type="submit">Load Data</button>
+  </form>
+  <p>Showing: <strong>{{ selected_date }}</strong> ({{ data_count }} records)</p>
+</div>
+
+<div class="card">
+  <h3>📊 Temperature & Humidity</h3>
+  {% if temps|length > 0 %}
+  <canvas id="chart"></canvas>
+  <script>
+  new Chart(document.getElementById('chart'), {
+    type: 'line',
+    data: {
+      labels: {{ timestamps|tojson }},
+      datasets: [
+        {
+          label: 'Temperature (°C)',
+          data: {{ temps|tojson }},
+          borderColor: '#ff6384',
+          backgroundColor: 'rgba(255,99,132,0.1)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Humidity (%)',
+          data: {{ hums|tojson }},
+          borderColor: '#36a2eb',
+          backgroundColor: 'rgba(54,162,235,0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#eaeaea' } }
+      },
+      scales: {
+        x: { ticks: { color: '#eaeaea' }, grid: { color: '#333' } },
+        y: { ticks: { color: '#eaeaea' }, grid: { color: '#333' } }
+      }
+    }
+  });
+  </script>
+  {% else %}
+  <p>No data for this date</p>
+  {% endif %}
+</div>
+
+{% if temps|length > 0 %}
+<div class="card">
+  <h3>📋 Statistics</h3>
+  <p>Avg Temp: {{ "%.1f"|format(temps|sum / temps|length) }} °C</p>
+  <p>Avg Humidity: {{ "%.1f"|format(hums|sum / hums|length) }} %</p>
+  <p>Max Temp: {{ "%.1f"|format(temps|max) }} °C</p>
+  <p>Min Temp: {{ "%.1f"|format(temps|min) }} °C</p>
+</div>
+{% endif %}
+{% endblock %}

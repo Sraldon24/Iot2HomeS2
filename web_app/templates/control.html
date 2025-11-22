@@ -1,0 +1,74 @@
+<!-- ============================================ -->
+<!-- FILE: web_app/templates/control.html -->
+<!-- ============================================ -->
+{% extends "base.html" %}
+{% block content %}
+<h2>🕹️ Device Control</h2>
+
+{% if message %}
+<div class="message {{ 'success' if '✅' in message else 'error' }}">{{ message }}</div>
+{% endif %}
+
+<div class="controls-grid">
+  <div class="card">
+    <h3>💡 LED</h3>
+    <p>Status: <strong>{{ 'ON' if device_states.get('led_status') == '1' else 'OFF' }}</strong></p>
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="device" value="led_status">
+      <input type="hidden" name="value" value="1">
+      <button type="submit">Turn ON</button>
+    </form>
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="device" value="led_status">
+      <input type="hidden" name="value" value="0">
+      <button type="submit" class="btn-off">Turn OFF</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>🔊 Buzzer</h3>
+    <p>Status: <strong>{{ 'ON' if device_states.get('buzzer_status') == '1' else 'OFF' }}</strong></p>
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="device" value="buzzer_status">
+      <input type="hidden" name="value" value="1">
+      <button type="submit">Turn ON</button>
+    </form>
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="device" value="buzzer_status">
+      <input type="hidden" name="value" value="0">
+      <button type="submit" class="btn-off">Turn OFF</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>🌀 Motor</h3>
+    <p>Status: <strong>{{ 'ON' if device_states.get('motor_status') == '1' else 'OFF' }}</strong></p>
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="device" value="motor_status">
+      <input type="hidden" name="value" value="1">
+      <button type="submit">Turn ON</button>
+    </form>
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="device" value="motor_status">
+      <input type="hidden" name="value" value="0">
+      <button type="submit" class="btn-off">Turn OFF</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h3>⚙️ Advanced Control</h3>
+  <form method="POST">
+    <select name="device" required>
+      <option value="led_status">LED</option>
+      <option value="buzzer_status">Buzzer</option>
+      <option value="motor_status">Motor</option>
+    </select>
+    <select name="value" required>
+      <option value="1">ON</option>
+      <option value="0">OFF</option>
+    </select>
+    <button type="submit">Execute</button>
+  </form>
+</div>
+{% endblock %}
