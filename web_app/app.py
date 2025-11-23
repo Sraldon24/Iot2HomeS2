@@ -27,7 +27,7 @@ AIO_BASE_URL = f"https://io.adafruit.com/api/v2/{AIO_USERNAME}"
 cloud_db = CloudDB()
 cloud_db.connect()
 
-mqtt = MqttClient()  # MQTT ONLY (no GPIO)
+mqtt = MqttClient(subscribe=False)  # MQTT ONLY (no GPIO)
 
 log = logging.getLogger(__name__)
 

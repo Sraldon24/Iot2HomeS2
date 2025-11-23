@@ -44,8 +44,13 @@ def main():
     
     try:
         init_db()
-        mqtt = MqttClient()
-        security = SecuritySystem()
+        mqtt = MqttClient(subscribe=True)
+
+        # ----------------------------
+        #  IMPORTANT FIX
+        # ----------------------------
+        security = SecuritySystem(use_gpio=True)
+
         environment = EnvironmentMonitor()
         sync_service = SyncService()
         sync_service.start()
