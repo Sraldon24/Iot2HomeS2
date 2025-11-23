@@ -1,270 +1,254 @@
-/* ============================================ */
-/* GLOBAL */
-/* ============================================ */
+/* ==========================================================
+   DomiSafe - Modern Dashboard Theme (Full Upgrade)
+   Dark + Neon Accents • Smooth UI • Responsive • Clean
+   ========================================================== */
 
-body {
-  font-family: Arial, sans-serif;
-  background: #121212;
-  color: #eaeaea;
+/* ---------- GLOBAL RESET ---------- */
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", Arial, sans-serif;
 }
 
-header {
-  background: #1f1f1f;
-  padding: 15px 30px;
+body {
+  background: #0c0f14;
+  color: #e2e6eb;
+  padding-bottom: 60px;
+}
+
+/* ---------- HEADER ---------- */
+.top-header {
+  background: #11151d;
+  padding: 18px 35px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid #4CAF50;
+  border-bottom: 2px solid #2f3748;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.brand {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 24px;
-}
-
-nav a {
-  color: #eaeaea;
-  margin: 0 15px;
-  text-decoration: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  transition: background 0.3s;
-}
-
-nav a:hover {
-  background: #4CAF50;
-}
-
-main {
-  padding: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* ============================================ */
-/* CARDS + BOXES */
-/* ============================================ */
-
-.card {
-  background: #1f1f1f;
-  padding: 25px;
-  margin: 20px 0;
-  border-radius: 8px;
-  border: 1px solid #333;
-}
-
-.card h3 {
-  margin-top: 0;
-  color: #4CAF50;
-  border-bottom: 2px solid #4CAF50;
-  padding-bottom: 10px;
-}
-
-.live-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin: 20px 0;
-}
-
-.sensor-box {
-  background: #2a2a2a;
-  padding: 20px;
-  border-radius: 6px;
-  text-align: center;
-}
-
-.sensor-box strong {
-  display: block;
-  font-size: 32px;
-  color: #4CAF50;
-  margin: 10px 0;
-}
-
-.controls-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+/* ---------- NAVBAR ---------- */
+.nav-bar {
+  display: flex;
   gap: 20px;
 }
 
-/* ============================================ */
-/* TABLES */
-/* ============================================ */
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+.nav-link {
+  color: #c7cdd4;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  transition: 0.25s;
+  font-size: 15px;
+  font-weight: 500;
 }
 
-th, td {
-  border: 1px solid #444;
-  padding: 12px;
-  text-align: center;
+.nav-link:hover {
+  background: #1b202a;
+  color: #ffffff;
 }
 
-th {
-  background: #2a2a2a;
-  color: #4CAF50;
-}
-
-/* ============================================ */
-/* FORMS + BUTTONS */
-/* ============================================ */
-
-button,
-input[type="submit"] {
-  background: #4CAF50;
+.nav-link.active {
+  background: #3b82f6;
   color: white;
+}
+
+/* ---------- MAIN CONTENT ---------- */
+.page-content {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* ---------- CARD ---------- */
+.card {
+  background: #11151d;
+  border: 1px solid #2f3748;
+  border-radius: 14px;
+  padding: 25px;
+  box-shadow: 0 0 22px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  transition: 0.25s;
+}
+
+.card:hover {
+  border-color: #4b5563;
+  transform: translateY(-2px);
+}
+
+.card h3 {
+  margin-bottom: 12px;
+  color: #a7b4c9;
+}
+
+/* ---------- BUTTONS ---------- */
+button {
   border: none;
-  padding: 10px 20px;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
-  border-radius: 4px;
   font-size: 14px;
-  margin: 5px;
-  transition: background 0.3s;
-}
-
-button:hover,
-input[type="submit"]:hover {
-  background: #45a049;
-}
-
-input[type="date"],
-select {
-  background: #2a2a2a;
-  color: #eaeaea;
-  border: 1px solid #444;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin: 5px;
-}
-
-/* Toggle buttons */
-.btn-off,
-.btn-disable {
-  background: #f44336;
-}
-
-.btn-off:hover,
-.btn-disable:hover {
-  background: #da190b;
+  font-weight: 600;
+  transition: 0.25s;
 }
 
 .btn-enable {
-  background: #4CAF50;
+  background: #22c55e;
+  color: black;
 }
 
-/* ============================================ */
-/* STATUS + MESSAGES */
-/* ============================================ */
+.btn-enable:hover {
+  background: #16a34a;
+}
 
-.status-box {
+.btn-disable {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-disable:hover {
+  background: #dc2626;
+}
+
+/* ---------- DEVICE STATES GRID ---------- */
+.device-state-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+}
+
+.device-state {
+  background: #1b202a;
+  padding: 15px;
+  border-radius: 10px;
   text-align: center;
-  padding: 30px;
-  border-radius: 8px;
-  border: 3px solid;
-  margin: 20px 0;
+  border: 1px solid #2f3748;
+}
+
+.device-state.on {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.device-state.off {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* ---------- STATUS BOX ---------- */
+.status-box {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 18px;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  border: 1px solid #2f3748;
 }
 
 .status-box.enabled {
-  border-color: #4CAF50;
+  color: #22c55e;
+  border-color: #22c55e;
 }
 
 .status-box.disabled {
-  border-color: #f44336;
+  color: #ef4444;
+  border-color: #ef4444;
 }
 
-.status-box div:first-child {
-  font-size: 48px;
+/* ---------- TABLES ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
 }
 
-.status-box strong {
-  font-size: 24px;
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #2f3748;
+  text-align: left;
 }
 
-.message {
+th {
+  color: #a7b4c9;
+  font-size: 14px;
+}
+
+tr:hover {
+  background: #161b23;
+}
+
+/* ---------- CHART AREA ---------- */
+canvas {
+  background: #0f131a;
   padding: 15px;
-  margin: 15px 0;
-  border-radius: 6px;
-  font-weight: bold;
+  border-radius: 14px;
 }
 
-.message.success {
-  background: #4CAF50;
-  color: white;
+/* ---------- FORMS ---------- */
+input[type="date"] {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #2f3748;
+  background: #0f131a;
+  color: #e2e6eb;
 }
 
-.message.error {
-  background: #f44336;
-  color: white;
-}
-
-/* Reusable color utilities */
-.warning {
-  color: #ff9800;
-}
-
-.success {
-  color: #4CAF50;
-}
-
-/* ============================================ */
-/* BADGES */
-/* ============================================ */
-
-.badges {
+.device-form {
+  margin-top: 10px;
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
-.badge,
+.device-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.device-status.on {
+  color: #22c55e;
+}
+
+.device-status.off {
+  color: #ef4444;
+}
+
+/* ---------- ALERTS ---------- */
+.warning {
+  color: #facc15;
+  margin-top: 8px;
+}
+
 .badge-danger {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  color: white;
+  color: #ef4444;
+  font-weight: 700;
 }
 
-.badge {
-  background: #4CAF50;
-}
-
-.badge-danger {
-  background: #f44336;
-}
-
-/* ============================================ */
-/* CANVAS */
-/* ============================================ */
-
-canvas {
-  max-height: 400px;
-}
-
-/* ============================================ */
-/* RESPONSIVE FIXES */
-/* ============================================ */
-
-@media (max-width: 600px) {
-  header {
-    flex-direction: column;
-    text-align: center;
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 700px) {
+  .nav-bar {
+    flex-wrap: wrap;
     gap: 10px;
   }
 
-  nav a {
-    margin: 5px;
+  .card {
+    padding: 18px;
   }
 
-  .sensor-box strong {
-    font-size: 24px;
-  }
-
-  .status-box div:first-child {
-    font-size: 36px;
+  .device-state-grid {
+    grid-template-columns: 1fr;
   }
 }

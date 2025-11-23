@@ -1,70 +1,91 @@
+<!-- FILE: web_app/templates/dashboard.html (Upgraded) -->
 {% extends "base.html" %}
 {% block content %}
-<h2>📊 Dashboard</h2>
 
+<h2>📊 Home Dashboard</h2>
+
+<!-- LIVE STATUS CARD -->
 <div class="card">
-  <h3>🌡️ Live Sensors (Adafruit IO)</h3>
+  <h3>📡 Live System Status</h3>
   <div class="live-grid">
-    <div class="sensor-box">
-      <span>Temperature:</span>
-      <strong id="temp">{{ live_data.get('temperature', 'N/A') }}</strong> °C
+    <div>
+      <h4>🌡️ Temperature</h4>
+      <p class="live-value">{{ live_data.temperature if live_data else '—' }}°C</p>
     </div>
-    <div class="sensor-box">
-      <span>Humidity:</span>
-      <strong id="humidity">{{ live_data.get('humidity', 'N/A') }}</strong> %
+    <div>
+      <h4>💧 Humidity</h4>
+      <p class="live-value">{{ live_data.humidity if live_data else '—' }}%</p>
     </div>
-    <div class="sensor-box">
-      <span>Motion:</span>
-      <strong id="motion">{{ '🔴 YES' if live_data.get('motion') == '1' else '🟢 No' }}</strong>
+    <div>
+      <h4>🚨 Motion</h4>
+      <p class="live-value motion {{ 'active' if live_data.motion == '1' else '' }}">
+        {{ '🔴 YES' if live_data.motion == '1' else '🟢 NO' }}
+      </p>
     </div>
   </div>
-  <button onclick="refreshLive()">🔄 Refresh</button>
+
+  <button id="refresh-btn" class="btn-enable" style="margin-top: 10px;">🔄 Refresh Now</button>
 </div>
 
+<!-- DEVICE STATES -->
 <div class="card">
   <h3>🎛️ Device Status</h3>
-  <table>
-    <tr><th>Device</th><th>Status</th></tr>
-    <tr><td>LED</td><td>{{ '🟢 ON' if device_states.get('led_status') == '1' else '⚫ OFF' }}</td></tr>
-    <tr><td>Buzzer</td><td>{{ '🔊 ON' if device_states.get('buzzer_status') == '1' else '🔇 OFF' }}</td></tr>
-    <tr><td>Motor</td><td>{{ '🌀 ON' if device_states.get('motor_status') == '1' else '⭕ OFF' }}</td></tr>
-  </table>
+  <div class="device-state-grid">
+    <div class="device-state {{ 'on' if device_states['led_status'] == '1' else 'off' }}">
+      <h4>💡 LED</h4>
+      <p>{{ '🟢 ON' if device_states['led_status'] == '1' else '🔴 OFF' }}</p>
+    </div>
+    <div class="device-state {{ 'on' if device_states['buzzer_status'] == '1' else 'off' }}">
+      <h4>🔔 Buzzer</h4>
+      <p>{{ '🟢 ON' if device_states['buzzer_status'] == '1' else '🔴 OFF' }}</p>
+    </div>
+    <div class="device-state {{ 'on' if device_states['motor_status'] == '1' else 'off' }}">
+      <h4>🔧 Motor</h4>
+      <p>{{ '🟢 ON' if device_states['motor_status'] == '1' else '🔴 OFF' }}</p>
+    </div>
+  </div>
 </div>
 
+<!-- RECENT ENV DATA -->
 <div class="card">
-  <h3>📈 Recent Environment</h3>
+  <h3>🗓️ Recent Environment Readings</h3>
+
   {% if latest_env %}
   <table>
-    <tr><th>Time</th><th>Temp (°C)</th><th>Humidity (%)</th></tr>
+    <tr>
+      <th>Time</th>
+      <th>Temp (°C)</th>
+      <th>Humidity (%)</th>
+    </tr>
     {% for row in latest_env %}
-    <tr><td>{{ row[0] }}</td><td>{{ "%.1f"|format(row[1]) }}</td><td>{{ "%.1f"|format(row[2]) }}</td></tr>
+    <tr>
+      <td>{{ row.timestamp }}</td>
+      <td>{{ row.temperature }}</td>
+      <td>{{ row.humidity }}</td>
+    </tr>
     {% endfor %}
   </table>
   {% else %}
-  <p>No data yet</p>
+  <p>No environment data recorded yet.</p>
   {% endif %}
 </div>
 
+<!-- SYNC STATUS -->
 <div class="card">
-  <h3>☁️ Sync Status</h3>
-  <p>Pending: {{ sync_pending.env }} env + {{ sync_pending.motion }} motion</p>
-  {% if sync_pending.env > 0 or sync_pending.motion > 0 %}
-  <p class="warning">⚠️ Syncing...</p>
-  {% else %}
-  <p class="success">✅ All synced</p>
-  {% endif %}
+  <h3>☁️ Cloud Sync</h3>
+  <p>Pending entries: <strong>{{ sync_pending }}</strong></p>
 </div>
 
 <script>
-function refreshLive() {
-  fetch('/api/live-data')
-    .then(r => r.json())
-    .then(d => {
-      document.getElementById('temp').textContent = d.temperature || 'N/A';
-      document.getElementById('humidity').textContent = d.humidity || 'N/A';
-      document.getElementById('motion').textContent = d.motion === '1' ? '🔴 YES' : '🟢 No';
-    });
-}
-setInterval(refreshLive, 30000);
+  document.getElementById("refresh-btn").addEventListener("click", async () => {
+    try {
+      const res = await fetch("/api/live-data");
+      const data = await res.json();
+      location.reload();
+    } catch (e) {
+      console.error("Live update failed", e);
+    }
+  });
 </script>
+
 {% endblock %}

@@ -1,18 +1,18 @@
-<!-- ============================================ -->
-<!-- FILE: web_app/templates/security.html -->
-<!-- ============================================ -->
 {% extends "base.html" %}
 {% block content %}
-<h2>🚨 Security Management</h2>
 
+<h2>🚨 Security System</h2>
+
+<!-- SYSTEM ENABLE/DISABLE -->
 <div class="card">
   <h3>🔐 System Status</h3>
   <div class="status-box {{ 'enabled' if is_enabled else 'disabled' }}">
     <div>{{ '🟢' if is_enabled else '🔴' }}</div>
     <div><strong>{{ 'ENABLED' if is_enabled else 'DISABLED' }}</strong></div>
   </div>
-  <form method="POST" style="margin-top: 20px;">
-    <button type="submit" name="toggle_security" 
+
+  <form method="POST" style="margin-top: 20px; display:flex; gap:10px;">
+    <button type="submit" name="toggle_security"
             value="{{ 'disable' if is_enabled else 'enable' }}"
             class="{{ 'btn-disable' if is_enabled else 'btn-enable' }}">
       {{ '🔒 Disable' if is_enabled else '🔓 Enable' }}
@@ -20,30 +20,48 @@
   </form>
 </div>
 
+
+<!-- INTRUSION STATS -->
 <div class="card">
-  <h3>📅 View Intrusions</h3>
+  <h3>📅 Intrusion Summary</h3>
   <form method="POST">
     <input type="date" name="date" value="{{ selected_date }}" required>
     <button type="submit">Load</button>
   </form>
+
   <p>{{ selected_date }}: <strong>{{ total_intrusions }}</strong> intrusions</p>
 </div>
 
+
+<!-- INTRUSION LOG TABLE -->
 <div class="card">
   <h3>📋 Intrusion Log</h3>
+
   {% if intrusions %}
   <table>
-    <tr><th>Time</th><th>Status</th><th>Image</th></tr>
+    <tr>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Image</th>
+    </tr>
+
     {% for event in intrusions %}
     <tr>
       <td>{{ event[0] }}</td>
       <td><span class="badge-danger">🔴 Motion</span></td>
-      <td>{{ event[2] if event[2] else '-' }}</td>
+      <td>
+        {% if event[2] %}
+          <img src="data:image/jpeg;base64,{{ event[2] }}" style="max-height:150px; border-radius:6px;" />
+        {% else %}
+          -
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </table>
   {% else %}
-  <p>✅ No intrusions on {{ selected_date }}</p>
+    <p>✅ No intrusions on {{ selected_date }}.</p>
   {% endif %}
 </div>
+
 {% endblock %}

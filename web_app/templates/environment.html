@@ -1,71 +1,101 @@
-<!-- ============================================ -->
-<!-- FILE: web_app/templates/environment.html -->
-<!-- ============================================ -->
 {% extends "base.html" %}
 {% block content %}
-<h2>🌦️ Environment Data</h2>
 
+<h2>🌡️ Environment Monitoring</h2>
+
+<!-- DATE SELECTOR -->
 <div class="card">
-  <h3>📅 Select Date</h3>
-  <form method="POST">
+  <h3>📅 Select a Date</h3>
+  <form method="POST" class="date-form">
     <input type="date" name="date" value="{{ selected_date }}" required>
-    <button type="submit">Load Data</button>
+    <button type="submit">Load</button>
   </form>
-  <p>Showing: <strong>{{ selected_date }}</strong> ({{ data_count }} records)</p>
+
+  {% if data_count == 0 %}
+    <p class="warning">No data recorded for this date.</p>
+  {% endif %}
 </div>
 
+
+<!-- CHART SECTION -->
+{% if data_count > 0 %}
 <div class="card">
-  <h3>📊 Temperature & Humidity</h3>
-  {% if temps|length > 0 %}
-  <canvas id="chart"></canvas>
-  <script>
-  new Chart(document.getElementById('chart'), {
+  <h3>📈 Temperature & Humidity</h3>
+  <canvas id="envChart" width="400" height="200"></canvas>
+</div>
+
+
+<!-- SUMMARY SECTION -->
+<div class="card">
+  <h3>📊 Daily Summary</h3>
+  <p><strong>Min Temp:</strong> {{ min_temp }}°C</p>
+  <p><strong>Max Temp:</strong> {{ max_temp }}°C</p>
+  <p><strong>Min Humidity:</strong> {{ min_hum }}%</p>
+  <p><strong>Max Humidity:</strong> {{ max_hum }}%</p>
+</div>
+
+
+<!-- RAW TABLE -->
+<div class="card">
+  <h3>📋 Raw Data</h3>
+  <table>
+    <tr>
+      <th>Time</th>
+      <th>Temp (°C)</th>
+      <th>Humidity (%)</th>
+    </tr>
+    {% for row in env_data %}
+    <tr>
+      <td>{{ row.timestamp }}</td>
+      <td>{{ row.temperature }}</td>
+      <td>{{ row.humidity }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+
+<!-- CHART SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('envChart').getContext('2d');
+
+  const chartData = {
+    labels: {{ labels | safe }},
+    datasets: [
+      {
+        label: 'Temperature (°C)',
+        data: {{ temperatures | safe }},
+        borderColor: 'rgb(255, 99, 132)',
+        tension: 0.3,
+        fill: false,
+      },
+      {
+        label: 'Humidity (%)',
+        data: {{ humidities | safe }},
+        borderColor: 'rgb(54, 162, 235)',
+        tension: 0.3,
+        fill: false,
+      }
+    ]
+  };
+
+  new Chart(ctx, {
     type: 'line',
-    data: {
-      labels: {{ timestamps|tojson }},
-      datasets: [
-        {
-          label: 'Temperature (°C)',
-          data: {{ temps|tojson }},
-          borderColor: '#ff6384',
-          backgroundColor: 'rgba(255,99,132,0.1)',
-          tension: 0.4,
-          fill: true
-        },
-        {
-          label: 'Humidity (%)',
-          data: {{ hums|tojson }},
-          borderColor: '#36a2eb',
-          backgroundColor: 'rgba(54,162,235,0.1)',
-          tension: 0.4,
-          fill: true
-        }
-      ]
-    },
+    data: chartData,
     options: {
       responsive: true,
       plugins: {
         legend: { labels: { color: '#eaeaea' } }
       },
       scales: {
-        x: { ticks: { color: '#eaeaea' }, grid: { color: '#333' } },
-        y: { ticks: { color: '#eaeaea' }, grid: { color: '#333' } }
+        x: { ticks: { color: '#eaeaea' } },
+        y: { ticks: { color: '#eaeaea' } }
       }
     }
   });
-  </script>
-  {% else %}
-  <p>No data for this date</p>
-  {% endif %}
-</div>
+</script>
 
-{% if temps|length > 0 %}
-<div class="card">
-  <h3>📋 Statistics</h3>
-  <p>Avg Temp: {{ "%.1f"|format(temps|sum / temps|length) }} °C</p>
-  <p>Avg Humidity: {{ "%.1f"|format(hums|sum / hums|length) }} %</p>
-  <p>Max Temp: {{ "%.1f"|format(temps|max) }} °C</p>
-  <p>Min Temp: {{ "%.1f"|format(temps|min) }} °C</p>
-</div>
 {% endif %}
+
 {% endblock %}

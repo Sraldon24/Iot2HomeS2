@@ -7,8 +7,12 @@ from modules.config_loader import load_config
 log = logging.getLogger(__name__)
 
 class MqttClient:
-    def __init__(self, config_file="config.json"):
+    def __init__(self, config_file="config.json", subscribe=True, security=None):
         self.cfg = load_config(config_file)
+        self.subscribe = subscribe
+
+        # IMPORTANT: store the real hardware SecuritySystem instance
+        self.security = security
 
         # Create random client ID to avoid conflicts
         self.client = mqtt.Client(client_id=f"DomiSafe-{uuid.uuid4().hex[:5]}")
@@ -47,6 +51,11 @@ class MqttClient:
         log.info("✅ MQTT connected")
         self.connected.set()
 
+        # Flask mode → DO NOT subscribe
+        if not self.subscribe:
+            log.info("ℹ️ MQTT client running in PUBLISH-ONLY mode (no subscriptions)")
+            return
+
         # Subscribe to control feeds from Adafruit IO
         username = self.cfg["ADAFRUIT_IO_USERNAME"]
 
@@ -68,25 +77,33 @@ class MqttClient:
     # HANDLE INCOMING COMMANDS
     # -----------------------------
     def _on_message(self, client, userdata, msg):
+        # Flask mode should never receive messages
+        if not self.subscribe:
+            return
+
         try:
             topic = msg.topic
             value = msg.payload.decode().strip()
-
             feed = topic.split("/")[-1]
+
             log.info(f"📥 Received → {feed} = {value}")
 
-            # Lazy import to avoid circular imports
-            from modules.security_system import SecuritySystem
+            # ensure security instance exists
+            if not self.security:
+                log.error("❌ No SecuritySystem instance attached to MqttClient")
+                return
 
-            # Route command
+            value = int(value)
+
+            # Route command to the REAL hardware instance
             if feed == "motor_status":
-                SecuritySystem.set_motor(int(value))
+                self.security.set_motor(value)
 
             elif feed == "led_status":
-                SecuritySystem.set_led(int(value))
+                self.security.set_led(value)
 
             elif feed == "buzzer_status":
-                SecuritySystem.set_buzzer(int(value))
+                self.security.set_buzzer(value)
 
         except Exception as e:
             log.error(f"MQTT on_message error: {e}")

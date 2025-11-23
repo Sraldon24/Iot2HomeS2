@@ -19,7 +19,7 @@ from modules.mqtt_client import MqttClient
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'domisafe-secret-key-change-me'
 
-cfg = load_config('../config.json')
+cfg = load_config('config.json')
 AIO_USERNAME = cfg.get('ADAFRUIT_IO_USERNAME', '')
 AIO_KEY = cfg.get('ADAFRUIT_IO_KEY', '')
 AIO_BASE_URL = f"https://io.adafruit.com/api/v2/{AIO_USERNAME}"

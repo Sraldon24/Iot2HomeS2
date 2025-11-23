@@ -1,62 +1,64 @@
-<!-- ============================================ -->
-<!-- FILE: web_app/templates/about.html -->
-<!-- ============================================ -->
-{% extends "base.html" %}
-{% block content %}
-<h2>ℹ️ About DomiSafe</h2>
+<!-- FILE: web_app/templates/about.html (Upgraded) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About – DomiSafe</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="top-header">
+    <h1 class="brand">🏠 DomiSafe</h1>
+    <nav class="nav-bar">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/environment" class="nav-link">Environment</a>
+      <a href="/security" class="nav-link">Security</a>
+      <a href="/control" class="nav-link">Control</a>
+      <a href="/about" class="nav-link active">About</a>
+    </nav>
+  </header>
 
-<div class="card">
-  <h3>🏠 Project Overview</h3>
-  <p>DomiSafe is an IoT home security system combining motion detection, environmental monitoring, and camera capture with cloud logging.</p>
-  
-  <h4>Features:</h4>
-  <ul>
-    <li>🔔 PIR motion detection with LED, buzzer, motor alerts</li>
-    <li>🌡️ DHT11 temperature and humidity monitoring</li>
-    <li>📷 Automatic camera capture on motion events</li>
-    <li>☁️ MQTT publishing to Adafruit IO</li>
-    <li>💾 Local SQLite + Cloud PostgreSQL sync</li>
-    <li>📊 Flask web dashboard with Chart.js</li>
-  </ul>
-</div>
+  <main class="page-content">
+    <div class="card">
+      <h2>ℹ️ About DomiSafe</h2>
+      <p>
+        DomiSafe is a real-time home monitoring and security system designed to track
+        environmental conditions, movement, and device status. It integrates hardware sensors,
+        Raspberry Pi processing, a cloud database, and a unified dashboard for control and
+        monitoring.
+      </p>
+    </div>
 
-<div class="card">
-  <h3>💭 Reflection</h3>
-  <h4>✅ What Worked:</h4>
-  <p>The threaded architecture allowed simultaneous monitoring. MQTT over TLS provided secure communication. The dual-database strategy handled internet outages gracefully.</p>
-  
-  <h4>🔧 What Was Hard:</h4>
-  <p>Implementing the offline-first sync mechanism required careful state tracking. Managing concurrent database writes from multiple threads was challenging.</p>
-  
-  <h4>🚀 Improvements:</h4>
-  <p>Real-time WebSocket updates, email/SMS notifications, machine learning motion detection, mobile app, time-based automation, and multi-user authentication.</p>
-</div>
+    <div class="card">
+      <h3>🧠 Core Features</h3>
+      <ul class="feature-list">
+        <li>Live device control (LED, buzzer, motor)</li>
+        <li>Real-time security monitoring with motion detection</li>
+        <li>Automatic environment tracking (temperature + humidity)</li>
+        <li>Camera capture upon intrusions</li>
+        <li>Cloud sync using NeonDB + local fail-safe storage</li>
+        <li>Adafruit IO integration for global remote access</li>
+      </ul>
+    </div>
 
-<div class="card">
-  <h3>👥 Team & Links</h3>
-  <p><strong>Developer:</strong> Amir (Sraldon24)</p>
-  <p><strong>Course:</strong> 420-N55 IoT</p>
-  <p><strong>Institution:</strong> Champlain College Saint-Lambert</p>
-  <p><strong>Term:</strong> Fall 2025</p>
-  
-  <h4>🔗 Links:</h4>
-  <ul>
-    <li><a href="https://github.com/Sraldon24/Iot2HomeS" target="_blank">GitHub Repository</a></li>
-    <li><a href="https://youtube.com/shorts/6NvQyifem0k?si=NhJyaJJdsLLMG1LM" target="_blank">Demo Video</a></li>
-    <li><a href="https://io.adafruit.com" target="_blank">Adafruit IO Dashboard</a></li>
-  </ul>
-</div>
+    <div class="card">
+      <h3>📡 System Architecture</h3>
+      <p>
+        The system is built using a modular Python backend, Flask web dashboard, MQTT-based
+        remote control, and a hardware security system running on Raspberry Pi. Motion events,
+        environment logs, and camera captures are saved locally and mirrored to the cloud.
+      </p>
+    </div>
 
-<div class="card">
-  <h3>📚 Tech Stack</h3>
-  <div class="badges">
-    <span class="badge">Python</span>
-    <span class="badge">Flask</span>
-    <span class="badge">MQTT</span>
-    <span class="badge">SQLite</span>
-    <span class="badge">PostgreSQL</span>
-    <span class="badge">Chart.js</span>
-    <span class="badge">Raspberry Pi</span>
-  </div>
-</div>
-{% endblock %}
+    <div class="card">
+      <h3>👤 Developer</h3>
+      <p><strong>Amir Ghadimi</strong></p>
+      <p>
+        Designed and built as part of a complete IoT security solution. Integrates hardware,
+        Python services, cloud sync, and a fully responsive dashboard.
+      </p>
+    </div>
+  </main>
+</body>
+</html>
