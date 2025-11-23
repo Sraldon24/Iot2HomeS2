@@ -12,7 +12,6 @@ from modules.config_loader import load_config
 from modules.cloud_db import CloudDB
 from modules.local_db import fetch_unsynced
 from modules.mqtt_client import MqttClient
-from modules.security_system import SecuritySystem
 
 # ============================================================
 # Flask App Setup
@@ -28,8 +27,7 @@ AIO_BASE_URL = f"https://io.adafruit.com/api/v2/{AIO_USERNAME}"
 cloud_db = CloudDB()
 cloud_db.connect()
 
-mqtt = MqttClient()
-security = SecuritySystem()
+mqtt = MqttClient()  # MQTT ONLY (no GPIO)
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +46,7 @@ def get_adafruit_feed(feed_name):
     except Exception as e:
         log.error(f"Feed fetch error: {e}")
         return None
+
 
 def set_adafruit_feed(feed_name, value):
     try:
@@ -172,23 +171,11 @@ def control():
 
         if device and value:
 
-            # 1) Update feed on Adafruit IO (REST)
+            # Update Adafruit IO
             success = set_adafruit_feed(device, value)
 
-            # 2) Publish over MQTT
+            # Send MQTT → main.py will handle GPIO
             mqtt.publish(device, value)
-
-            # 3) Local Hardware Control
-            val = int(value)
-
-            if device == "led_status":
-                SecuritySystem.set_led(val)
-
-            elif device == "buzzer_status":
-                SecuritySystem.set_buzzer(val)
-
-            elif device == "motor_status":
-                SecuritySystem.set_motor(val)
 
             message = f"✅ {device} → {value}" if success else "❌ Failed"
 
