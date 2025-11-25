@@ -1,3 +1,7 @@
+# ============================================================
+# FINAL FIXED FULL APP.PY FOR DOMISAFE
+# ============================================================
+
 from flask import Flask, render_template, request, jsonify
 import requests
 import logging
@@ -27,131 +31,134 @@ AIO_BASE_URL = f"https://io.adafruit.com/api/v2/{AIO_USERNAME}"
 cloud_db = CloudDB()
 cloud_db.connect()
 
-mqtt = MqttClient(subscribe=False)  # MQTT ONLY (no GPIO)
+mqtt = MqttClient(subscribe=False)  # PUBLISH-ONLY (webapp must not subscribe)
 
 log = logging.getLogger(__name__)
 
 # ============================================================
 # Adafruit IO Helper Functions
 # ============================================================
-def get_adafruit_feed(feed_name):
+def get_adafruit(feed_name):
     try:
         url = f"{AIO_BASE_URL}/feeds/{feed_name}/data/last"
         headers = {'X-AIO-Key': AIO_KEY}
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return {'value': data.get('value')}
+        r = requests.get(url, headers=headers, timeout=5)
+        if r.status_code == 200:
+            return r.json().get("value")
         return None
     except Exception as e:
-        log.error(f"Feed fetch error: {e}")
+        log.error(f"Feed read error {feed_name}: {e}")
         return None
 
 
-def set_adafruit_feed(feed_name, value):
+def set_adafruit(feed_name, value):
     try:
         url = f"{AIO_BASE_URL}/feeds/{feed_name}/data"
         headers = {'X-AIO-Key': AIO_KEY, 'Content-Type': 'application/json'}
         data = {'value': str(value)}
-        response = requests.post(url, headers=headers, json=data, timeout=5)
-        return response.status_code in [200, 201]
+        r = requests.post(url, headers=headers, json=data, timeout=5)
+        return r.status_code in (200, 201)
     except Exception as e:
-        log.error(f"Feed set error: {e}")
+        log.error(f"Feed write error {feed_name}: {e}")
         return False
 
 # ============================================================
-# Dashboard Page
+# DASHBOARD PAGE
 # ============================================================
 @app.route('/')
-def index():
+def dashboard():
     try:
-        sensors = ['temperature', 'humidity', 'motion']
-        live_data = {}
+        # LIVE DATA
+        live_data = {
+            'temperature': get_adafruit('temperature') or "N/A",
+            'humidity': get_adafruit('humidity') or "N/A",
+            'motion': get_adafruit('motion') or "0"
+        }
 
-        for sensor in sensors:
-            feed = get_adafruit_feed(sensor)
-            live_data[sensor] = feed['value'] if feed else 'N/A'
-
+        # ENVIRONMENT LAST 5 ROWS
         latest_env = cloud_db.get_latest_environment(limit=5)
-        latest_motion = cloud_db.get_latest_motion(limit=5)
 
+        # DEVICE STATES
         devices = ['led_status', 'buzzer_status', 'motor_status']
-        device_states = {}
+        device_states = {dev: get_adafruit(dev) or "0" for dev in devices}
 
-        for device in devices:
-            feed = get_adafruit_feed(device)
-            device_states[device] = feed['value'] if feed else 'unknown'
-
+        # PENDING SYNC VALUES
         sync_pending = {
             'env': len(fetch_unsynced('environment')),
             'motion': len(fetch_unsynced('motion'))
         }
 
         return render_template(
-            'dashboard.html',
+            "dashboard.html",
             live_data=live_data,
             latest_env=latest_env,
-            latest_motion=latest_motion,
             device_states=device_states,
             sync_pending=sync_pending
         )
     except Exception as e:
-        log.error(f"Dashboard error: {e}")
+        log.error(f"DASHBOARD ERROR: {e}")
         return render_template(
-            'dashboard.html',
-            live_data={}, latest_env=[], latest_motion=[],
-            device_states={}, sync_pending={'env': 0, 'motion': 0}
+            "dashboard.html",
+            live_data={},
+            latest_env=[],
+            device_states={},
+            sync_pending={}
         )
 
 # ============================================================
-# Environment Charts
+# ENVIRONMENT PAGE
 # ============================================================
 @app.route('/environment', methods=['GET', 'POST'])
 def environment():
     selected_date = request.form.get('date', str(date.today()))
-    env_data = cloud_db.get_environment_by_date(selected_date)
+    rows = cloud_db.get_environment_by_date(selected_date)
 
-    timestamps = []
+    labels = []
     temps = []
     hums = []
 
-    for row in env_data:
-        ts = row[0].strftime('%H:%M:%S') if hasattr(row[0], 'strftime') else str(row[0])
-        timestamps.append(ts)
-        temps.append(float(row[1]))
-        hums.append(float(row[2]))
+    for row in rows:
+        timestamp, t, h = row
+        labels.append(timestamp.strftime("%H:%M:%S"))
+        temps.append(float(t))
+        hums.append(float(h))
 
     return render_template(
-        'environment.html',
+        "environment.html",
         selected_date=selected_date,
-        timestamps=timestamps,
-        temps=temps,
-        hums=hums,
-        data_count=len(env_data)
+        data_count=len(rows),
+        labels=labels,
+        temperatures=temps,
+        humidities=hums,
+        min_temp=min(temps) if temps else None,
+        max_temp=max(temps) if temps else None,
+        min_hum=min(hums) if hums else None,
+        max_hum=max(hums) if hums else None,
+        env_data=rows
     )
 
 # ============================================================
-# Security Page
+# SECURITY PAGE
 # ============================================================
 @app.route('/security', methods=['GET', 'POST'])
 def security_page():
     selected_date = request.form.get('date', str(date.today()))
 
-    security_enabled = get_adafruit_feed('security_enabled')
-    is_enabled = security_enabled.get('value') == '1' if security_enabled else True
+    raw = get_adafruit("security_enabled")
+    is_enabled = (raw == "1")
 
     if request.method == 'POST' and 'toggle_security' in request.form:
-        new_state = 1 if request.form.get('toggle_security') == 'enable' else 0
+        new_state = 1 if request.form.get("toggle_security") == "enable" else 0
 
-        if set_adafruit_feed('security_enabled', new_state):
-            mqtt.publish("security_enabled", new_state)
-            is_enabled = (new_state == 1)
+        set_adafruit("security_enabled", new_state)
+        mqtt.publish("security_enabled", new_state)  # main.py reacts
+        is_enabled = (new_state == 1)
 
-    motion_events = cloud_db.get_motion_by_date(selected_date)
-    intrusions = [event for event in motion_events if event[1] == 1]
+    motion_rows = cloud_db.get_motion_by_date(selected_date)
+    intrusions = [r for r in motion_rows if r[1] == 1]
 
     return render_template(
-        'security.html',
+        "security.html",
         selected_date=selected_date,
         is_enabled=is_enabled,
         intrusions=intrusions,
@@ -159,62 +166,54 @@ def security_page():
     )
 
 # ============================================================
-# Device Control Page
+# CONTROL PAGE
 # ============================================================
 @app.route('/control', methods=['GET', 'POST'])
-def control():
+def control_page():
     message = ""
 
-    if request.method == 'POST':
-        device = request.form.get('device')
-        value = request.form.get('value')
+    if request.method == "POST":
+        device = request.form.get("device")
+        value = request.form.get("value")
 
         if device and value:
-
-            # Update Adafruit IO
-            success = set_adafruit_feed(device, value)
-
-            # Send MQTT → main.py will handle GPIO
+            set_adafruit(device, value)
             mqtt.publish(device, value)
-
-            message = f"✅ {device} → {value}" if success else "❌ Failed"
+            message = f"Updated {device} → {value}"
 
     devices = ['led_status', 'buzzer_status', 'motor_status']
-    device_states = {}
-
-    for device in devices:
-        feed = get_adafruit_feed(device)
-        device_states[device] = feed['value'] if feed else 'unknown'
+    device_states = {dev: get_adafruit(dev) or "0" for dev in devices}
 
     return render_template(
-        'control.html',
+        "control.html",
         device_states=device_states,
         message=message
     )
 
 # ============================================================
-# API - Live JSON Data
+# API – LIVE DATA FOR DASHBOARD AUTO REFRESH
 # ============================================================
-@app.route('/api/live-data')
-def api_live_data():
+@app.route("/api/live-data")
+def api_live():
     try:
-        data = {}
-        for sensor in ['temperature', 'humidity', 'motion']:
-            feed = get_adafruit_feed(sensor)
-            data[sensor] = feed['value'] if feed else 'N/A'
+        data = {
+            "temperature": get_adafruit("temperature") or "N/A",
+            "humidity": get_adafruit("humidity") or "N/A",
+            "motion": get_adafruit("motion") or "0",
+        }
         return jsonify(data)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)})
 
 # ============================================================
-# About Page
+# ABOUT PAGE
 # ============================================================
 @app.route('/about')
-def about():
-    return render_template('about.html')
+def about_page():
+    return render_template("about.html")
 
 # ============================================================
-# Run App
+# RUN APP
 # ============================================================
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
