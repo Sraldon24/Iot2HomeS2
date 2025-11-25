@@ -1,3 +1,10 @@
+"""
+============================================
+DomiSafe IoT System - Main Application (FIXED)
+============================================
+Fixed: Security checks mqtt.is_security_enabled() before triggering alerts
+"""
+
 import time, threading, logging, signal, sys, os
 from datetime import datetime
 from modules.mqtt_client import MqttClient
@@ -45,9 +52,7 @@ def main():
     try:
         init_db()
         security = SecuritySystem(use_gpio=True)
-
-        mqtt = MqttClient(subscribe=True, security = security)
-        
+        mqtt = MqttClient(subscribe=True, security=security)
         environment = EnvironmentMonitor()
         sync_service = SyncService()
         sync_service.start()
@@ -66,6 +71,7 @@ def main():
                 mqtt.publish("temperature", data["temperature"])
                 mqtt.publish("humidity", data["humidity"])
                 save_env(data["temperature"], data["humidity"])
+                log.debug(f"📊 Env: {data['temperature']}°C, {data['humidity']}%")
             except Exception as e:
                 log.error(f"Env error: {e}")
             time.sleep(30)
@@ -75,6 +81,17 @@ def main():
         log.info("🔒 Security monitoring started")
         while RUNNING:
             try:
+                # FIXED: Check if security is enabled via MQTT state
+                if not mqtt.is_security_enabled():
+                    # Security disabled - just publish current states without alerting
+                    mqtt.publish("motion", 0)
+                    mqtt.publish("led_status", 0)
+                    mqtt.publish("buzzer_status", 0)
+                    mqtt.publish("motor_status", 0)
+                    time.sleep(5)
+                    continue
+                
+                # Security is ENABLED - run normal detection
                 status = security.check()
                 mqtt.publish("motion", int(status["motion"]))
                 mqtt.publish("led_status", status["led_status"])
@@ -97,14 +114,18 @@ def main():
                 if status["motion"]:
                     img_name = f"motion_{datetime.now():%Y%m%d_%H%M%S}.jpg"
                     save_motion(1, img_name)
+                    log.info(f"🚨 Motion event saved: {img_name}")
+                    
             except Exception as e:
                 log.error(f"Security error: {e}")
             time.sleep(5)
         log.info("🔒 Security stopped")
     
+    # Start environment monitoring in background thread
     threading.Thread(target=environment_loop, daemon=True).start()
     
     try:
+        # Run security loop in main thread
         security_loop()
     except KeyboardInterrupt:
         log.info("Keyboard interrupt")

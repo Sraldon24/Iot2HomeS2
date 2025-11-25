@@ -1,3 +1,10 @@
+"""
+============================================
+DomiSafe IoT System - MQTT Client (FIXED)
+============================================
+Fixed: Added security_enabled to subscriptions
+"""
+
 import logging
 import threading
 import uuid
@@ -13,6 +20,9 @@ class MqttClient:
 
         # IMPORTANT: store the real hardware SecuritySystem instance
         self.security = security
+        
+        # Track security enabled state (for main.py to check)
+        self.security_enabled = True
 
         # Create random client ID to avoid conflicts
         self.client = mqtt.Client(client_id=f"DomiSafe-{uuid.uuid4().hex[:5]}")
@@ -59,10 +69,12 @@ class MqttClient:
         # Subscribe to control feeds from Adafruit IO
         username = self.cfg["ADAFRUIT_IO_USERNAME"]
 
+        # FIXED: Added security_enabled to the list
         control_feeds = [
             "motor_status",
             "led_status",
-            "buzzer_status"
+            "buzzer_status",
+            "security_enabled"  # ← ADDED THIS
         ]
 
         for feed in control_feeds:
@@ -72,6 +84,7 @@ class MqttClient:
 
     def _on_disconnect(self, client, userdata, rc):
         log.warning("⚠️ MQTT disconnected")
+        self.connected.clear()
 
     # -----------------------------
     # HANDLE INCOMING COMMANDS
@@ -88,7 +101,14 @@ class MqttClient:
 
             log.info(f"📥 Received → {feed} = {value}")
 
-            # ensure security instance exists
+            # Handle security_enabled toggle
+            if feed == "security_enabled":
+                self.security_enabled = (value == "1")
+                status = "ENABLED" if self.security_enabled else "DISABLED"
+                log.info(f"🔐 Security system {status}")
+                return
+
+            # Ensure security instance exists for device control
             if not self.security:
                 log.error("❌ No SecuritySystem instance attached to MqttClient")
                 return
@@ -98,15 +118,25 @@ class MqttClient:
             # Route command to the REAL hardware instance
             if feed == "motor_status":
                 self.security.set_motor(value)
+                log.info(f"🔧 Motor set to {value}")
 
             elif feed == "led_status":
                 self.security.set_led(value)
+                log.info(f"💡 LED set to {value}")
 
             elif feed == "buzzer_status":
                 self.security.set_buzzer(value)
+                log.info(f"🔔 Buzzer set to {value}")
 
         except Exception as e:
             log.error(f"MQTT on_message error: {e}")
+
+    # -----------------------------
+    # CHECK IF SECURITY IS ENABLED
+    # -----------------------------
+    def is_security_enabled(self):
+        """Returns current security enabled state"""
+        return self.security_enabled
 
     # -----------------------------
     # SAFE PUBLISH WRAPPER

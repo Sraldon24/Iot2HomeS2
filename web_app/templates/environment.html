@@ -1,3 +1,4 @@
+<!-- FILE: web_app/templates/environment.html (FIXED) -->
 {% extends "base.html" %}
 {% block content %}
 
@@ -6,13 +7,15 @@
 <!-- DATE SELECTOR -->
 <div class="card">
   <h3>📅 Select a Date</h3>
-  <form method="POST" class="date-form">
+  <form method="POST" class="date-form" style="display: flex; gap: 10px; align-items: center;">
     <input type="date" name="date" value="{{ selected_date }}" required>
-    <button type="submit">Load</button>
+    <button type="submit" class="btn-enable">Load Data</button>
   </form>
 
   {% if data_count == 0 %}
-    <p class="warning">No data recorded for this date.</p>
+    <p class="warning" style="margin-top: 15px;">⚠️ No data recorded for {{ selected_date }}.</p>
+  {% else %}
+    <p style="margin-top: 10px; color: #22c55e;">✅ Found {{ data_count }} records for {{ selected_date }}</p>
   {% endif %}
 </div>
 
@@ -20,7 +23,7 @@
 <!-- CHART SECTION -->
 {% if data_count > 0 %}
 <div class="card">
-  <h3>📈 Temperature & Humidity</h3>
+  <h3>📈 Temperature & Humidity Chart</h3>
   <canvas id="envChart" width="400" height="200"></canvas>
 </div>
 
@@ -28,27 +31,34 @@
 <!-- SUMMARY SECTION -->
 <div class="card">
   <h3>📊 Daily Summary</h3>
-  <p><strong>Min Temp:</strong> {{ min_temp }}°C</p>
-  <p><strong>Max Temp:</strong> {{ max_temp }}°C</p>
-  <p><strong>Min Humidity:</strong> {{ min_hum }}%</p>
-  <p><strong>Max Humidity:</strong> {{ max_hum }}%</p>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+    <div>
+      <p><strong>🌡️ Min Temperature:</strong> {{ "%.1f"|format(min_temp) if min_temp else 'N/A' }}°C</p>
+      <p><strong>🌡️ Max Temperature:</strong> {{ "%.1f"|format(max_temp) if max_temp else 'N/A' }}°C</p>
+    </div>
+    <div>
+      <p><strong>💧 Min Humidity:</strong> {{ "%.1f"|format(min_hum) if min_hum else 'N/A' }}%</p>
+      <p><strong>💧 Max Humidity:</strong> {{ "%.1f"|format(max_hum) if max_hum else 'N/A' }}%</p>
+    </div>
+  </div>
 </div>
 
 
 <!-- RAW TABLE -->
 <div class="card">
-  <h3>📋 Raw Data</h3>
+  <h3>📋 Raw Data Table</h3>
   <table>
     <tr>
       <th>Time</th>
-      <th>Temp (°C)</th>
+      <th>Temperature (°C)</th>
       <th>Humidity (%)</th>
     </tr>
     {% for row in env_data %}
     <tr>
-      <td>{{ row.timestamp }}</td>
-      <td>{{ row.temperature }}</td>
-      <td>{{ row.humidity }}</td>
+      <!-- FIXED: Use tuple indices instead of object attributes -->
+      <td>{{ row[0] }}</td>
+      <td>{{ "%.1f"|format(row[1]) }}</td>
+      <td>{{ "%.1f"|format(row[2]) }}</td>
     </tr>
     {% endfor %}
   </table>
@@ -67,15 +77,17 @@
         label: 'Temperature (°C)',
         data: {{ temperatures | safe }},
         borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.1)',
         tension: 0.3,
-        fill: false,
+        fill: true,
       },
       {
         label: 'Humidity (%)',
         data: {{ humidities | safe }},
         borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
         tension: 0.3,
-        fill: false,
+        fill: true,
       }
     ]
   };
@@ -85,12 +97,27 @@
     data: chartData,
     options: {
       responsive: true,
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
       plugins: {
-        legend: { labels: { color: '#eaeaea' } }
+        legend: { 
+          labels: { color: '#eaeaea' } 
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        }
       },
       scales: {
-        x: { ticks: { color: '#eaeaea' } },
-        y: { ticks: { color: '#eaeaea' } }
+        x: { 
+          ticks: { color: '#eaeaea' },
+          grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        },
+        y: { 
+          ticks: { color: '#eaeaea' },
+          grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        }
       }
     }
   });

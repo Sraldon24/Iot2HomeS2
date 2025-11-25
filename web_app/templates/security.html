@@ -1,3 +1,4 @@
+<!-- FILE: web_app/templates/security.html (FIXED) -->
 {% extends "base.html" %}
 {% block content %}
 
@@ -7,60 +8,69 @@
 <div class="card">
   <h3>🔐 System Status</h3>
   <div class="status-box {{ 'enabled' if is_enabled else 'disabled' }}">
-    <div>{{ '🟢' if is_enabled else '🔴' }}</div>
-    <div><strong>{{ 'ENABLED' if is_enabled else 'DISABLED' }}</strong></div>
+    <div style="font-size: 32px;">{{ '🟢' if is_enabled else '🔴' }}</div>
+    <div><strong>Security is {{ 'ENABLED' if is_enabled else 'DISABLED' }}</strong></div>
   </div>
 
   <form method="POST" style="margin-top: 20px; display:flex; gap:10px;">
     <button type="submit" name="toggle_security"
             value="{{ 'disable' if is_enabled else 'enable' }}"
             class="{{ 'btn-disable' if is_enabled else 'btn-enable' }}">
-      {{ '🔒 Disable' if is_enabled else '🔓 Enable' }}
+      {{ '🔒 Disable Security' if is_enabled else '🔓 Enable Security' }}
     </button>
   </form>
 </div>
 
 
-<!-- INTRUSION STATS -->
+<!-- INTRUSION LOOKUP -->
 <div class="card">
-  <h3>📅 Intrusion Summary</h3>
-  <form method="POST">
+  <h3>📅 Intrusion History Lookup</h3>
+  <form method="POST" style="display: flex; gap: 10px; align-items: center;">
     <input type="date" name="date" value="{{ selected_date }}" required>
-    <button type="submit">Load</button>
+    <button type="submit" class="btn-enable">Search</button>
   </form>
 
-  <p>{{ selected_date }}: <strong>{{ total_intrusions }}</strong> intrusions</p>
+  <p style="margin-top: 15px;">
+    📊 <strong>{{ selected_date }}:</strong> 
+    {% if total_intrusions > 0 %}
+      <span style="color: #ef4444;">{{ total_intrusions }} intrusion(s) detected</span>
+    {% else %}
+      <span style="color: #22c55e;">No intrusions</span>
+    {% endif %}
+  </p>
 </div>
 
 
 <!-- INTRUSION LOG TABLE -->
 <div class="card">
-  <h3>📋 Intrusion Log</h3>
+  <h3>📋 Intrusion Event Log</h3>
 
   {% if intrusions %}
   <table>
     <tr>
       <th>Time</th>
       <th>Status</th>
-      <th>Image</th>
+      <th>Image Captured</th>
     </tr>
 
     {% for event in intrusions %}
     <tr>
+      <!-- FIXED: Use tuple indices - event is (timestamp, motion, image_name) -->
       <td>{{ event[0] }}</td>
-      <td><span class="badge-danger">🔴 Motion</span></td>
+      <td><span class="badge-danger">🔴 Motion Detected</span></td>
       <td>
         {% if event[2] %}
-          <img src="data:image/jpeg;base64,{{ event[2] }}" style="max-height:150px; border-radius:6px;" />
+          <!-- Note: event[2] is the image filename, not base64 data -->
+          <span style="color: #3b82f6;">📷 {{ event[2] }}</span>
         {% else %}
-          -
+          <span style="color: #6b7280;">No image</span>
         {% endif %}
       </td>
     </tr>
     {% endfor %}
   </table>
   {% else %}
-    <p>✅ No intrusions on {{ selected_date }}.</p>
+    <p style="color: #22c55e;">✅ No intrusions recorded for {{ selected_date }}.</p>
   {% endif %}
 </div>
 

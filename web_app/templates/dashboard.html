@@ -1,4 +1,4 @@
-<!-- FILE: web_app/templates/dashboard.html (Upgraded) -->
+<!-- FILE: web_app/templates/dashboard.html (FIXED) -->
 {% extends "base.html" %}
 {% block content %}
 
@@ -7,24 +7,32 @@
 <!-- LIVE STATUS CARD -->
 <div class="card">
   <h3>📡 Live System Status</h3>
-  <div class="live-grid">
+  <div class="live-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
     <div>
       <h4>🌡️ Temperature</h4>
-      <p class="live-value">{{ live_data.temperature if live_data else '—' }}°C</p>
+      <p class="live-value" style="font-size: 28px; font-weight: bold; color: #ef4444;">
+        {{ live_data.temperature if live_data else '—' }}°C
+      </p>
     </div>
     <div>
       <h4>💧 Humidity</h4>
-      <p class="live-value">{{ live_data.humidity if live_data else '—' }}%</p>
+      <p class="live-value" style="font-size: 28px; font-weight: bold; color: #3b82f6;">
+        {{ live_data.humidity if live_data else '—' }}%
+      </p>
     </div>
     <div>
       <h4>🚨 Motion</h4>
-      <p class="live-value motion {{ 'active' if live_data.motion == '1' else '' }}">
-        {{ '🔴 YES' if live_data.motion == '1' else '🟢 NO' }}
+      <p class="live-value" style="font-size: 28px; font-weight: bold;">
+        {% if live_data.motion == '1' %}
+          <span style="color: #ef4444;">🔴 DETECTED</span>
+        {% else %}
+          <span style="color: #22c55e;">🟢 CLEAR</span>
+        {% endif %}
       </p>
     </div>
   </div>
 
-  <button id="refresh-btn" class="btn-enable" style="margin-top: 10px;">🔄 Refresh Now</button>
+  <button id="refresh-btn" class="btn-enable" style="margin-top: 15px;">🔄 Refresh Now</button>
 </div>
 
 <!-- DEVICE STATES -->
@@ -59,9 +67,10 @@
     </tr>
     {% for row in latest_env %}
     <tr>
-      <td>{{ row.timestamp }}</td>
-      <td>{{ row.temperature }}</td>
-      <td>{{ row.humidity }}</td>
+      <!-- FIXED: Use tuple indices instead of object attributes -->
+      <td>{{ row[0] }}</td>
+      <td>{{ row[1] }}</td>
+      <td>{{ row[2] }}</td>
     </tr>
     {% endfor %}
   </table>
@@ -72,8 +81,11 @@
 
 <!-- SYNC STATUS -->
 <div class="card">
-  <h3>☁️ Cloud Sync</h3>
-  <p>Pending entries: <strong>{{ sync_pending }}</strong></p>
+  <h3>☁️ Cloud Sync Status</h3>
+  <!-- FIXED: Display individual counts properly -->
+  <p>📊 Pending Environment Records: <strong>{{ sync_pending.env }}</strong></p>
+  <p>🚨 Pending Motion Events: <strong>{{ sync_pending.motion }}</strong></p>
+  <p>📦 Total Pending: <strong>{{ sync_pending.env + sync_pending.motion }}</strong></p>
 </div>
 
 <script>

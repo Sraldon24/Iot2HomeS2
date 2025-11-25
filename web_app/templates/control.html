@@ -1,9 +1,16 @@
-<!-- FILE: web_app/templates/control.html (Upgraded) -->
+<!-- FILE: web_app/templates/control.html (FIXED) -->
 {% extends "base.html" %}
 {% block content %}
 
 <h2>🎛️ Device Control</h2>
 
+{% if message %}
+<div class="card" style="background: #1a4d1a; border-color: #22c55e;">
+  <p>✅ {{ message }}</p>
+</div>
+{% endif %}
+
+<!-- LED CONTROL -->
 <div class="card">
   <h3>💡 LED</h3>
   <div class="device-row">
@@ -12,12 +19,21 @@
       {{ '🟢 ON' if device_states['led_status'] == '1' else '🔴 OFF' }}
     </span>
   </div>
-  <form method="POST" class="device-form">
-    <button name="led" value="1" class="btn-enable">Turn ON</button>
-    <button name="led" value="0" class="btn-disable">Turn OFF</button>
-  </form>
+  <div class="device-form">
+    <form method="POST" style="display: inline;">
+      <input type="hidden" name="device" value="led_status">
+      <input type="hidden" name="value" value="1">
+      <button type="submit" class="btn-enable">Turn ON</button>
+    </form>
+    <form method="POST" style="display: inline;">
+      <input type="hidden" name="device" value="led_status">
+      <input type="hidden" name="value" value="0">
+      <button type="submit" class="btn-disable">Turn OFF</button>
+    </form>
+  </div>
 </div>
 
+<!-- BUZZER CONTROL -->
 <div class="card">
   <h3>🔔 Buzzer</h3>
   <div class="device-row">
@@ -26,12 +42,21 @@
       {{ '🟢 ON' if device_states['buzzer_status'] == '1' else '🔴 OFF' }}
     </span>
   </div>
-  <form method="POST" class="device-form">
-    <button name="buzzer" value="1" class="btn-enable">Turn ON</button>
-    <button name="buzzer" value="0" class="btn-disable">Turn OFF</button>
-  </form>
+  <div class="device-form">
+    <form method="POST" style="display: inline;">
+      <input type="hidden" name="device" value="buzzer_status">
+      <input type="hidden" name="value" value="1">
+      <button type="submit" class="btn-enable">Turn ON</button>
+    </form>
+    <form method="POST" style="display: inline;">
+      <input type="hidden" name="device" value="buzzer_status">
+      <input type="hidden" name="value" value="0">
+      <button type="submit" class="btn-disable">Turn OFF</button>
+    </form>
+  </div>
 </div>
 
+<!-- MOTOR CONTROL -->
 <div class="card">
   <h3>🔧 Motor</h3>
   <div class="device-row">
@@ -40,10 +65,18 @@
       {{ '🟢 ON' if device_states['motor_status'] == '1' else '🔴 OFF' }}
     </span>
   </div>
-  <form method="POST" class="device-form">
-    <button name="motor" value="1" class="btn-enable">Turn ON</button>
-    <button name="motor" value="0" class="btn-disable">Turn OFF</button>
-  </form>
+  <div class="device-form">
+    <form method="POST" style="display: inline;">
+      <input type="hidden" name="device" value="motor_status">
+      <input type="hidden" name="value" value="1">
+      <button type="submit" class="btn-enable">Turn ON</button>
+    </form>
+    <form method="POST" style="display: inline;">
+      <input type="hidden" name="device" value="motor_status">
+      <input type="hidden" name="value" value="0">
+      <button type="submit" class="btn-disable">Turn OFF</button>
+    </form>
+  </div>
 </div>
 
 {% endblock %}
