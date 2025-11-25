@@ -15,6 +15,7 @@ import logging
 from datetime import datetime, date
 import sys
 import os
+import time
 
 # Allow imports from root/modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -78,6 +79,7 @@ def get_adafruit(feed_name):
 def set_adafruit(feed_name, value):
     """Set value on an Adafruit IO feed"""
     try:
+        time.sleep(0.3)  # Rate limiting
         feed_key = to_feed_key(feed_name)
         url = f"{AIO_BASE_URL}/feeds/{feed_key}/data"
         headers = {'X-AIO-Key': AIO_KEY, 'Content-Type': 'application/json'}
