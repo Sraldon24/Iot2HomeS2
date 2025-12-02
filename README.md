@@ -10,7 +10,7 @@ A complete IoT home security system with motion detection, environmental monitor
 
 ## 👥 **Team Information**
 
-**Developer:** Amir (Sraldon24)  
+**Developer:** Amir (Sraldon24)  Alex 
 **Course:** 420-N55 IoT: Design and Prototyping of Connected Devices  
 **Institution:** Champlain College Saint-Lambert  
 **Term:** Fall 2025  
