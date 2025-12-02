@@ -1,13 +1,19 @@
 import psycopg2
 import logging
 from modules.config_loader import load_config
+from typing import Optional
 
 log = logging.getLogger(__name__)
 
+
 class CloudDB:
-    def __init__(self, config_path="config.json"):
+    def __init__(self, config_path: str = "config.json", db_url: Optional[str] = None):
+        """CloudDB can be constructed either with a `db_url` override or
+        by loading `NEON_DB_URL` from the provided `config_path`.
+        """
         cfg = load_config(config_path)
-        self.conn_string = cfg.get("NEON_DB_URL", "")
+        # prefer explicit db_url override, otherwise use config
+        self.conn_string = db_url if db_url else cfg.get("NEON_DB_URL", "")
         self.conn = None
         self.enabled = cfg.get("cloud_sync_enabled", True)
         
